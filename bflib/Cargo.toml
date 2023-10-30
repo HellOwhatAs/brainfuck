@@ -3,6 +3,9 @@ name = "bflib"
 version = "0.1.0"
 edition = "2021"
 
+description = "a BrainFuck-to-Rust transpiler using Rust proc macro."
+license = "MIT"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]

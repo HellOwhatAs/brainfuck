@@ -51,6 +51,17 @@ fn transpiler(input: String) -> String {
     res
 }
 
+
+/// inline Brainfuck code  
+/// 
+/// Example of Hello World:
+/// ```
+/// let (pc: usize, mem: Vec<u8>) = brain_fuck!(
+///     ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
+///     >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
+/// );
+/// println!("{:?}", (pc, mem));
+/// ```
 #[proc_macro]
 pub fn brain_fuck(_item: TokenStream) -> TokenStream {
     let input = _item.to_string();

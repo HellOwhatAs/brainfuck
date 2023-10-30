@@ -1,6 +1,6 @@
 [package]
 name = "bflib"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 description = "a BrainFuck-to-Rust transpiler using Rust proc macro."

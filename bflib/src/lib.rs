@@ -47,7 +47,7 @@ fn transpiler(input: String) -> String {
             _ => {}
         }
     }
-    res.push_str(&"(pc, mem)}");
+    res.push_str("(pc, mem)}");
     res
 }
 

@@ -1,6 +1,5 @@
 # BrainFuck compiler using Rust proc macro
-references: https://zhuanlan.zhihu.com/p/276625575
-
+More precisely, the BrainFuck-to-Rust transpiler using Rust proc macro
 
 <!-- 
 cargo new brainfuck

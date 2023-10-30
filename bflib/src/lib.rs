@@ -2,7 +2,6 @@ use std::str::FromStr;
 use proc_macro::TokenStream;
 
 fn transpiler(input: String) -> String {
-    let mut flag = false;
     let mut res = String::from(r##"
     {
         let mut pc = 0;
@@ -29,7 +28,6 @@ fn transpiler(input: String) -> String {
             },
             '.' => {
                 res.push_str("print!(\"{}\", mem[pc] as char);");
-                flag = true;
             },
             ',' => {
                 res.push_str(r##"
@@ -48,9 +46,6 @@ fn transpiler(input: String) -> String {
             },
             _ => {}
         }
-    }
-    if flag {
-        res.push_str("println!();");
     }
     res.push_str(&"(pc, mem)}");
     res

@@ -1,69 +1,35 @@
-use std::str::FromStr;
-use proc_macro::TokenStream;
+pub use bflib_proc_macro::brain_fuck;
 
-fn transpiler(input: String) -> String {
-    let mut res = String::from(r##"
-    {
-        let mut pc = 0;
-        let mut mem: Vec<u8> = vec![0; 1];
-    "##);
-    for c in input.chars() {
-        match c {
-            '>' => {
-                res.push_str(r##"
-                pc += 1;
-                if mem.len() == pc {
-                    mem.push(0);
-                }
-                "##);
-            },
-            '<' => {
-                res.push_str("pc -= 1;");
-            },
-            '+' => {
-                res.push_str("mem[pc] = mem[pc].wrapping_add(1);");
-            },
-            '-' => {
-                res.push_str("mem[pc] = mem[pc].wrapping_sub(1);");
-            },
-            '.' => {
-                res.push_str("print!(\"{}\", mem[pc] as char);");
-            },
-            ',' => {
-                res.push_str(r##"
-                {
-                    let mut buffer = [0; 1];
-                    std::io::Read::read_exact(&mut std::io::stdin(), &mut buffer).unwrap();
-                    mem[pc] = buffer[0];
-                }
-                "##);
-            },
-            '[' => {
-                res.push_str("while mem[pc] != 0 {");
-            },
-            ']' => {
-                res.push_str("}");
-            },
-            _ => {}
-        }
-    }
-    res.push_str("(pc, mem)}");
-    res
+pub struct BrainfuckBlock {
+    code: &'static dyn Fn(&mut usize, &mut Vec<u8>),
+    runned: bool
 }
 
+impl BrainfuckBlock {
+    pub fn new(code: &'static dyn Fn(&mut usize, &mut Vec<u8>)) -> BrainfuckBlock {
+        BrainfuckBlock { code, runned: false }
+    }
+    pub fn env(mut self, mut pc: usize, mut mem: Vec<u8>) -> (usize, Vec<u8>) {
+        (self.code)(&mut pc, &mut mem);
+        self.runned = true;
+        (pc, mem)
+    }
+}
 
-/// inline Brainfuck code  
-/// 
-/// Example of Hello World:
-/// ```
-/// let (pc: usize, mem: Vec<u8>) = brain_fuck!(
-///     ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-///     >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-/// );
-/// println!("{:?}", (pc, mem));
-/// ```
-#[proc_macro]
-pub fn brain_fuck(_item: TokenStream) -> TokenStream {
-    let input = _item.to_string();
-    TokenStream::from_str(&transpiler(input)).unwrap()
+impl Into<(usize, Vec<u8>)> for BrainfuckBlock {
+    fn into(mut self) -> (usize, Vec<u8>) {
+        self.runned = true;
+        let mut pc = 0;
+        let mut mem = vec![];
+        (self.code)(&mut pc, &mut mem);
+        (pc, mem)
+    }
+}
+
+impl Drop for BrainfuckBlock {
+    fn drop(&mut self) {
+        if !self.runned {
+            (self.code)(&mut 0, &mut vec![])
+        }
+    }
 }

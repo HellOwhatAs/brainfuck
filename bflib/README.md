@@ -41,8 +41,7 @@ More precisely, the BrainFuck-to-Rust transpiler using Rust proc macro
    (run on `into` calling)
    ```rust
    let (pc, mem) = brain_fuck!(
-       ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-       >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-   ).env(0, vec![]).into();
+       [.>]
+   ).env(0, vec![72, 101, 108, 108, 79, 119, 104, 97, 116, 65, 115, 10]).into();
    println!("{:?}", (pc, mem));
    ```

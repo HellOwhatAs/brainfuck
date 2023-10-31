@@ -34,9 +34,8 @@
 //!    (run on `into` calling)
 //!    ```rust
 //!    let (pc, mem) = brain_fuck!(
-//!        ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-//!        >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-//!    ).env(0, vec![]).into();
+//!        [.>]
+//!    ).env(0, vec![72, 101, 108, 108, 79, 119, 104, 97, 116, 65, 115, 10]).into();
 //!    println!("{:?}", (pc, mem));
 //!    ```
 //! 
@@ -223,7 +222,7 @@
 //!         }
 //!         mem[*pc] = mem[*pc].wrapping_add(1);
 //!     }
-//! });
+//! })
 //! ```
 
 
@@ -257,40 +256,31 @@ impl BrainfuckBlock {
         self.opt_env = Some((pc, mem));
         self
     }
+
+    fn run(&mut self) {
+        let (mut pc, mut mem) = (0, vec![]);
+        if self.opt_env.is_some() {
+            (pc, mem) = self.opt_env.take().unwrap();
+        }
+        (self.code)(&mut pc, &mut mem);
+        self.opt_env = Some((pc, mem));
+    }
 }
 
 impl Into<(usize, Vec<u8>)> for BrainfuckBlock {
     /// obtain `(pc: usize, mem: Vec<u8>)` after running
     fn into(mut self) -> (usize, Vec<u8>) {
         self.runned = true;
-        let mut pc = 0;
-        let mut mem = vec![];
-        (self.code)(&mut pc, &mut mem);
-        (pc, mem)
+        self.run();
+        self.opt_env.take().unwrap()
     }
 }
 
 impl Drop for BrainfuckBlock {
-    /// runs the code on dropping if the block never runned
-    /// 
-    /// Case:
-    /// ```
-    /// brain_fuck!(
-    ///     ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-    ///     >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-    /// );
-    /// ```
+    /// run the code on dropping if the block never runned before via `into`
     fn drop(&mut self) {
         if !self.runned {
-            match self {
-                BrainfuckBlock { code, opt_env: Some((pc, mem)), runned: false } => {
-                    code(pc, mem);
-                },
-                BrainfuckBlock { code, opt_env: None, runned: false } => {
-                    code(&mut 0, &mut vec![]);
-                },
-                BrainfuckBlock {runned: true, .. } => {}
-            }
+            self.run();
         }
     }
 }

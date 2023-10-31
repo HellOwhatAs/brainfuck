@@ -4,14 +4,14 @@ version = 3
 
 [[package]]
 name = "bflib"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "bflib_proc_macro",
 ]
 
 [[package]]
 name = "bflib_proc_macro"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "quote",
  "syn",

@@ -4,29 +4,43 @@ use proc_macro::TokenStream;
 fn transpiler(input: String) -> String {
     let mut res = String::from(r##"
         ::bflib::BrainfuckBlock::new(&|pc: &mut usize, mem: &mut Vec<u8>| {
-            while mem.len() <= *pc {
-                mem.push(0);
+            if mem.len() <= *pc {
+                mem.append(&mut vec![0; *pc - mem.len() + 1]);
             }
     "##);
-    for c in input.chars() {
-        match c {
-            '>' => {
-                res.push_str(r##"
-                *pc += 1;
-                if mem.len() == *pc {
-                    mem.push(0);
+    let mut cache = (' ', 0);
+    for c in input.chars().filter(|c| "><+-,.[]".contains(*c)) {
+        if c == cache.0 {
+            cache.1 += 1;
+            continue;
+        }
+        {
+            match cache.0 {
+                '>' => {
+                    res.push_str(&format!("*pc += {};", cache.1));
+                    res.push_str(r##"
+                        if mem.len() <= *pc {
+                            mem.append(&mut vec![0; *pc - mem.len() + 1]);
+                        }
+                    "##);
                 }
-                "##);
-            },
-            '<' => {
-                res.push_str("*pc -= 1;");
-            },
-            '+' => {
-                res.push_str("mem[*pc] = mem[*pc].wrapping_add(1);");
-            },
-            '-' => {
-                res.push_str("mem[*pc] = mem[*pc].wrapping_sub(1);");
-            },
+                '<' => {
+                    res.push_str(&format!("if *pc < {0} {{ panic!(\"BrainFuck Program Counter reduced to below zero !!!\"); }} else {{ *pc -= {0}; }}", cache.1));
+                }
+                '+' => {
+                    res.push_str(&format!("mem[*pc] = mem[*pc].wrapping_add({});", cache.1));
+                }
+                '-' => {
+                    res.push_str(&format!("mem[*pc] = mem[*pc].wrapping_sub({});", cache.1));
+                }
+                _ => {}
+            }
+            cache = (' ', 0);
+        }
+        match c {
+            '>' | '<' | '+' | '-' => {
+                cache = (c, 1);
+            }
             '.' => {
                 res.push_str("print!(\"{}\", mem[*pc] as char);");
             },
@@ -45,6 +59,28 @@ fn transpiler(input: String) -> String {
             ']' => {
                 res.push_str("}");
             },
+            _ => {}
+        }
+    }
+    {
+        match cache.0 {
+            '>' => {
+                res.push_str(&format!("*pc += {};", cache.1));
+                res.push_str(r##"
+                    if mem.len() <= *pc {
+                        mem.append(&mut vec![0; *pc - mem.len() + 1]);
+                    }
+                "##);
+            }
+            '<' => {
+                res.push_str(&format!("if *pc < {0} {{ panic!(\"BrainFuck Program Counter reduced to below zero !!!\"); }} else {{ *pc -= {0}; }}", cache.1));
+            }
+            '+' => {
+                res.push_str(&format!("mem[*pc] = mem[*pc].wrapping_add({});", cache.1));
+            }
+            '-' => {
+                res.push_str(&format!("mem[*pc] = mem[*pc].wrapping_sub({});", cache.1));
+            }
             _ => {}
         }
     }

@@ -1,6 +1,6 @@
 [package]
 name = "bflib"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 
 description = "a BrainFuck-to-Rust transpiler using Rust proc macro."
@@ -10,4 +10,4 @@ repository = "https://github.com/HellOwhatAs/brainfuck"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bflib_proc_macro = {version = "0.1.7", path = "./bflib_proc_macro"}
+bflib_proc_macro = {version = "0.1.8", path = "./bflib_proc_macro"}

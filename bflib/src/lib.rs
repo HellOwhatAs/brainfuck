@@ -3,33 +3,44 @@
 //! 
 //! ## Examples:
 //! 
-//! 1. Runs on `into` called
-//!    (using `into` method to obtain `(pc: usize, mem: Vec<u8>)`)
-//!    ```rust
-//!    let (pc, mem) = brain_fuck!(
-//!        ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-//!        >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-//!    ).into();
-//!    println!("{:?}", (pc, mem));
-//!    ```
-//! 2. Runs on `env` called
-//!    (`env` method sets `pc` and `mem` for the block)
-//!    (`env` method also returns `(pc: usize, mem: Vec<u8>)`)
-//!    ```rust
-//!    let mut pc = 0;
-//!    let mut mem = vec![72, 101, 108, 108, 79, 119, 104, 97, 116, 65, 115, 10, 0];
-//!    let (pc, mem) = brain_fuck!(
-//!        [.>]
-//!    ).env(pc, mem);
-//!    println!("{:?}", (pc, mem));
-//!    ```
-//! 3. Runs on drop
+//! 1. Hello World
+//!    (run on dropping)
 //!    ```rust
 //!    brain_fuck!(
 //!        ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
 //!        >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
 //!    );
 //!    ```
+//! 2. using `into` method to obtain `(pc: usize, mem: Vec<u8>)` after running
+//!    (run on `into` calling)
+//!    ```rust
+//!    let (pc, mem) = brain_fuck!(
+//!        ++++++++[>+>++++<<-]>++>>+<[-[>>+<<-]+>>]>+[
+//!            -<<<[
+//!                ->[+[-]+>++>>>-<<]<[<]>>++++++[<<+++++>>-]+<<++.[-]<<
+//!            ]>.>+[>>]>+
+//!        ]
+//!    ).into();
+//!    println!("{:?}", (pc, mem));
+//!    ```
+//! 3. use `env` method to set _Program Counter_ `pc` and _Memory_ `mem` for brainfuck codeblock
+//!    (run on dropping)
+//!    ```rust
+//!    brain_fuck!(
+//!        [.>]
+//!    ).env(0, vec![79, 75, 10]);
+//!    ```
+//! 4. Altogether
+//!    (run on `into` calling)
+//!    ```rust
+//!    let (pc, mem) = brain_fuck!(
+//!        ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
+//!        >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
+//!    ).env(0, vec![]).into();
+//!    println!("{:?}", (pc, mem));
+//!    ```
+//! 
+//! 
 //! 
 //! ## Explaination
 //! The brainfuck code
@@ -225,37 +236,9 @@ pub use bflib_proc_macro::brain_fuck;
 ///     >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
 /// )
 /// ```
-/// The brainfuck code in it runs on
-/// 1. drop of the block
-///    ```
-///    brain_fuck!(
-///        ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-///        >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-///    );
-///    ```
-/// 2. calling `env`
-///    ```
-///    let (pc, mem) = brain_fuck!(
-///        ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-///        >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-///    ).env(pc, mem);
-///    ```
-/// 3. calling `into`
-///    ```
-///    let (pc, mem) = brain_fuck!(
-///        ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-///        >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-///    ).into();
-///    ```
-/// **But notice that THIS WON'T RUN**
-/// ```
-/// let tmp: BrainfuckBlock = brain_fuck!(
-///     ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
-///     >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-/// );
-/// ```
 pub struct BrainfuckBlock {
     code: &'static dyn Fn(&mut usize, &mut Vec<u8>),
+    opt_env: Option<(usize, Vec<u8>)>,
     runned: bool
 }
 
@@ -266,16 +249,13 @@ impl BrainfuckBlock {
     /// 
     /// **HUMAN NEVER USE**
     pub fn new(code: &'static dyn Fn(&mut usize, &mut Vec<u8>)) -> BrainfuckBlock {
-        BrainfuckBlock { code, runned: false }
+        BrainfuckBlock { code, opt_env: None, runned: false }
     }
     /// Sets the Program Counter `pc` and Memory `mem` of the Brainfuck codeblock
-    /// and runs the code
-    /// 
-    /// Returns `(pc: usize, mem: Vec<u8>)` after running
-    pub fn env(mut self, mut pc: usize, mut mem: Vec<u8>) -> (usize, Vec<u8>) {
-        (self.code)(&mut pc, &mut mem);
-        self.runned = true;
-        (pc, mem)
+    /// Returns self
+    pub fn env(mut self, pc: usize, mem: Vec<u8>) -> Self {
+        self.opt_env = Some((pc, mem));
+        self
     }
 }
 
@@ -302,7 +282,15 @@ impl Drop for BrainfuckBlock {
     /// ```
     fn drop(&mut self) {
         if !self.runned {
-            (self.code)(&mut 0, &mut vec![])
+            match self {
+                BrainfuckBlock { code, opt_env: Some((pc, mem)), runned: false } => {
+                    code(pc, mem);
+                },
+                BrainfuckBlock { code, opt_env: None, runned: false } => {
+                    code(&mut 0, &mut vec![]);
+                },
+                BrainfuckBlock {runned: true, .. } => {}
+            }
         }
     }
 }

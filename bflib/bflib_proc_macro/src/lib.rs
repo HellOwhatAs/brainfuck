@@ -56,11 +56,24 @@ fn transpiler(input: String) -> String {
 /// inline Brainfuck code  
 /// 
 /// Example of Hello World:
+/// 
+/// (using `into` method to obtain `(pc: usize, mem: Vec<u8>)`)
 /// ```
-/// let (pc: usize, mem: Vec<u8>) = brain_fuck!(
+/// let (pc, mem) = brain_fuck!(
 ///     ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.
 ///     >---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
-/// );
+/// ).into();
+/// println!("{:?}", (pc, mem));
+/// ```
+/// Using `env` method to set `pc` and `mem` for the block
+/// 
+/// (`env` method also returns `(pc: usize, mem: Vec<u8>)`)
+/// ```
+/// let mut pc = 0;
+/// let mut mem = vec![72, 101, 108, 108, 79, 119, 104, 97, 116, 65, 115, 10, 0];
+/// let (pc, mem) = brain_fuck!(
+///     [.>]
+/// ).env(pc, mem);
 /// println!("{:?}", (pc, mem));
 /// ```
 #[proc_macro]

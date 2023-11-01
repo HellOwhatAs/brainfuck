@@ -5,10 +5,20 @@ More precisely, the BrainFuck-to-Rust transpiler using Rust proc macro
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![docs.rs](https://docs.rs/rustpython/badge.svg)](https://docs.rs/bflib/)
 
-
-
+## Installation
+Cargo.toml
+```toml
+[dependencies]
+bflib = "0.1.9"
+```
 
 ## Examples:
+
+
+```rust
+use bflib::brain_fuck;
+```
+
 
 1. Hello World
    (run on dropping)
